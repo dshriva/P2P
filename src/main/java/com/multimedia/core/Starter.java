@@ -164,13 +164,19 @@ public class Starter {
             }
         } else {
             Peer peer = new Peer(ip, id, port);
+            InetAddress serverIp = null;
+            try {
+                serverIp = InetAddress.getByName("127.0.0.1");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
             //System.out.println("You are " + peer.toString());
             _logger.trace("You are " + peer.toString());
             peer.setLastSeen(System.currentTimeMillis());
             peer.setActive(true);
             try {
                 DatagramSocket peerSocket = new DatagramSocket(port, ip);
-                periodicTimer.schedule(pingServer(peerSocket, serverPort, peer, ip), 0, K);
+                periodicTimer.schedule(pingServer(peerSocket, serverPort, peer, serverIp), 0, K);
 
             } catch (SocketException e) {
                 System.err.println("This port is already in use. Please retry with another port.");
