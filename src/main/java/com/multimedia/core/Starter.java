@@ -9,11 +9,15 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.multimedia.handler.PeerTCPHandler;
+import com.multimedia.handler.ServerTCPHandler;
+import com.multimedia.handler.ServerUDPHandler;
 import org.apache.log4j.*;
 
 
+import static com.multimedia.handler.ServerTCPHandler.createTCPSocket;
 import static com.multimedia.util.NetworkConstants.*;
-
+//import Logger class from org.apache.log4j.Logger;
 /*
  * created by divya at 9/29/2018
  */
@@ -21,13 +25,13 @@ import static com.multimedia.util.NetworkConstants.*;
 public class Starter {
     public static Logger _logger = Logger.getLogger(String.valueOf(Starter.class));
 
+    int serverPort = 3000;
 
     public static void main(String args[]) {
         BasicConfigurator.configure();
         System.out.println("Welcome to Peer to Peer project");
         onBoard();
     }
-
     private static void onBoard() {
         boolean flag = true;
 
@@ -77,6 +81,7 @@ public class Starter {
         }
     }
 
+    // server port 4000
     private static void createNode(int port) {
 
         InetAddress ip = null;
@@ -87,7 +92,10 @@ public class Starter {
         }
         String id = ip + ":" + System.currentTimeMillis();
         int serverPort = 3000;
+        int peerPort = 0;
         Timer periodicTimer = new Timer();
+
+        //initLogging('f');
 
         System.out.println("Enter the preferred log level from the choices :'d' --> debug, 't' --> trace, 'e' --> error, 'd' --> debug, 'f' --> fatal):");
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -109,6 +117,7 @@ public class Starter {
         }
 
         if (port == 3000) {
+
             serverPort = port;
             final Server server = new Server(ip, id, serverPort);
 
@@ -119,18 +128,21 @@ public class Starter {
             DatagramSocket serverSocket = null;
             try {
                 serverSocket = new DatagramSocket(serverPort, ip);
-                server.scheduleFailureDetection();
+                ServerUDPHandler serverUDPHandler = new ServerUDPHandler();
+                serverUDPHandler.scheduleFailureDetection();
                 //System.out.println("Server socket created");
                 _logger.trace("Server socket created");
+                serverUDPHandler.startReceiverThread(serverUDPHandler, serverSocket);
 
-                server.startReceiverThread(server, serverSocket);
 
                 while (true) {
                     try {
                         System.out.println("Press 1 to see list of machines the network");
                         //_logger.info("Press 1 to join the network");
 
-                        System.out.println("Press 2 to exit");
+                        System.out.println("Press 2 for file or text transfer");
+
+                        System.out.println("Press 3 to exit");
                         // _logger.info("Press 2 to exit");
 
                         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -147,6 +159,13 @@ public class Starter {
                                 break;
 
                             case '2':
+                                System.out.println("Creating TCP Socket");
+
+                                createTCPSocket(serverPort, ip);
+                                break;
+
+
+                            case '3':
                                 default:
                                     System.out.println("Bye");
                                     break;
@@ -164,6 +183,7 @@ public class Starter {
             }
         } else {
             Peer peer = new Peer(ip, id, port);
+            peerPort = port;
             InetAddress serverIp = null;
             try {
                 serverIp = InetAddress.getByName("127.0.0.1");
@@ -174,17 +194,51 @@ public class Starter {
             _logger.trace("You are " + peer.toString());
             peer.setLastSeen(System.currentTimeMillis());
             peer.setActive(true);
-            try {
-                DatagramSocket peerSocket = new DatagramSocket(port, ip);
-                periodicTimer.schedule(pingServer(peerSocket, serverPort, peer, serverIp), 0, K);
 
-            } catch (SocketException e) {
-                System.err.println("This port is already in use. Please retry with another port.");
+
+            while (true) {
+                try {
+                    System.out.println("Hello Peer!");
+
+                    System.out.println("Press 1 for connecting to the network and for text or file transfer");
+
+                   // System.out.println("Press 2 for file or text transfer");
+
+                    System.out.println("Press 2 to exit");
+                    // _logger.info("Press 2 to exit");
+
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                    String command = reader.readLine();
+
+                    char c = command.charAt(0);
+                    switch (c) {
+
+                        case '1':
+                            try {
+                                DatagramSocket peerSocket = new DatagramSocket(port, ip);
+                                periodicTimer.schedule(pingServer(peerSocket, serverPort, peer, serverIp), 0, K);
+                                System.out.println("Creating TCP Connection");
+                                PeerTCPHandler peerTCPHandler = new PeerTCPHandler();
+                                peerTCPHandler.createPeerSocket(port,ip);
+                            } catch (SocketException e) {
+                                System.err.println("This port is already in use. Please retry with another port.");
+                            }
+                            break;
+
+                        case '2':
+                        default:
+                            System.out.println("Bye");
+                            break;
+                    }
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
         }
     }
-
 
     private static TimerTask pingServer(final DatagramSocket peerSocket, final int serverPort, final Peer peerInfo, final InetAddress ip) {
         TimerTask pingServer = new TimerTask() {
