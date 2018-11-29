@@ -9,11 +9,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import static com.multimedia.domain.Server.membershipMap;
+import static com.multimedia.domain.Server.fileMap;
 import static com.multimedia.util.NetworkConstants.K;
 import static com.multimedia.util.NetworkConstants.M;
 
@@ -42,6 +41,20 @@ public class ServerUDPHandler {
                         membershipMap.get(peer.getId()).setLastSeen(System.currentTimeMillis());
                         membershipMap.get(peer.getId()).setActive(true);
                     }
+
+                    if(! peer.getFileSet().isEmpty()) {
+                        for(String file : peer.getFileSet()){
+                            if(! fileMap.containsKey(file)) {
+                                Set<Integer> nodes = new HashSet<Integer>();
+                                nodes.add(peer.getPort());
+                                fileMap.put(file,nodes);
+                            } else {
+                                fileMap.get(file).add(peer.getPort());
+                            }
+                        }
+                    }
+
+
 
                     //Printing map
                    /* System.out.println("------------------------------------------------");

@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Set;
 
 /*
  * created by divya at 10/1/2018
@@ -31,15 +32,16 @@ public class ServerTCPHandler {
 
                 System.out.println("Yes!! Got a connection");
 
-                //BufferedReader bufReader = new BufferedReader(new InputStreamReader(System.in));
+                BufferedReader bufReader = new BufferedReader(new InputStreamReader(System.in));
 
-                FileInputStream fr = new FileInputStream("C:\\Users\\divya\\Desktop\\MS\\FilesTransfer\\image1.jpeg");
+                FileInputStream fr = new FileInputStream("C:\\Users\\divya\\Desktop\\MS\\FilesTransfer\\2.jpg");
                 byte[] b = new byte[20002];
 
                 fr.read(b,0,b.length);
 
                 OutputStream ostream = socket.getOutputStream();
                 ostream.write(b,0,b.length);
+                System.out.println("Image sent at time : " + System.currentTimeMillis());
                 //PrintWriter pwrite = new PrintWriter(ostream, true);
 
                 //InputStream istream = socket.getInputStream();

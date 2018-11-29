@@ -24,7 +24,7 @@ public class Server extends Peer {
     public static Map<String, Peer> membershipMap = new ConcurrentHashMap<String, Peer>();
 
     // fileMap has - file name --> List of node id having that file
-    private Map<String, Set<String>> fileMap = new ConcurrentHashMap<String, Set<String>>();
+    public static Map<String, Set<Integer>> fileMap = new ConcurrentHashMap<String, Set<Integer>>();
 
     public Server(InetAddress ip, String id, int port) {
         super(ip, id, port);
@@ -38,11 +38,11 @@ public class Server extends Peer {
         this.membershipMap = membershipMap;
     }
 
-    public Map<String, Set<String>> getFileMap() {
+    public Map<String, Set<Integer>> getFileMap() {
         return fileMap;
     }
 
-    public void setFileMap(Map<String, Set<String>> fileMap) {
+    public void setFileMap(Map<String, Set<Integer>> fileMap) {
         this.fileMap = fileMap;
     }
 

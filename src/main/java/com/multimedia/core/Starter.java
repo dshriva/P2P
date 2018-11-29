@@ -5,9 +5,7 @@ import com.multimedia.domain.Server;
 
 import java.io.*;
 import java.net.*;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import com.multimedia.handler.PeerTCPHandler;
 import com.multimedia.handler.ServerTCPHandler;
@@ -15,6 +13,7 @@ import com.multimedia.handler.ServerUDPHandler;
 import org.apache.log4j.*;
 
 
+import static com.multimedia.domain.Server.fileMap;
 import static com.multimedia.handler.ServerTCPHandler.createTCPSocket;
 import static com.multimedia.util.NetworkConstants.*;
 //import Logger class from org.apache.log4j.Logger;
@@ -137,7 +136,7 @@ public class Starter {
 
                 while (true) {
                     try {
-                        System.out.println("Press 1 to see list of machines the network");
+                        System.out.println("Press 1 to see list of machines the network and the files");
                         //_logger.info("Press 1 to join the network");
 
                         System.out.println("Press 2 for file or text transfer");
@@ -155,13 +154,21 @@ public class Starter {
                                 for (Map.Entry<String, Peer> entrySet : server.getMembershipMap().entrySet()) {
                                     System.out.println(entrySet.getValue().toString());
                                 }
+
+                                System.out.println("Here is the list of files!");
+                                for (Map.Entry<String, Set<Integer>> entrySet : fileMap.entrySet()) {
+                                    System.out.println(entrySet.getKey() + "----->" + entrySet.getValue().toString());
+                                }
+
                                 System.out.println();
                                 break;
 
                             case '2':
+
                                 System.out.println("Creating TCP Socket");
 
                                 createTCPSocket(serverPort, ip);
+
                                 break;
 
 
@@ -216,10 +223,28 @@ public class Starter {
                         case '1':
                             try {
                                 DatagramSocket peerSocket = new DatagramSocket(port, ip);
-                                periodicTimer.schedule(pingServer(peerSocket, serverPort, peer, serverIp), 0, K);
-                                System.out.println("Creating TCP Connection");
+
                                 PeerTCPHandler peerTCPHandler = new PeerTCPHandler();
+
+                                File folder = new File("C://Files//" + port);
+                                try{
+                                    if(folder.mkdir()) {
+                                        System.out.println("Directory Created");
+                                    }
+                                } catch(Exception e){
+                                    e.printStackTrace();
+                                }
+                                peer.setFileSet(peerTCPHandler.listFilesForFolder(folder,ip, id ,port, peer.getFileSet()));
+
+
+                                periodicTimer.schedule(pingServer(peerSocket, serverPort, peer, serverIp), 0, K);
                                 peerTCPHandler.createPeerSocket(port,ip);
+                                System.out.println("Creating TCP Connection");
+
+
+                                //peerTCPHandler.createDirectory(ip);
+
+
                             } catch (SocketException e) {
                                 System.err.println("This port is already in use. Please retry with another port.");
                             }
